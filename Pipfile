@@ -5,6 +5,8 @@ name = "pypi"
 
 [packages]
 eth-brownie = "*"
+pandas = "*"
+matplotlib = "*"
 
 [dev-packages]
 
