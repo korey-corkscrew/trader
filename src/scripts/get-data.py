@@ -13,8 +13,9 @@ def getPrice(pair):
         reserve[0] = reserves[0] * 10**-18
         reserve[1] = reserves[1] * 10**-6
         reserves.append(int(time.time()))
-        reserves.append(getAmountOut(reserve[0], reserve[1], 1000))
-        #reserves.append(reserves[1]/reserves[0])
+        #reserves.append(reserve[)
+        #reserves.append(getAmountOut(reserve[0], reserve[1], 1000))
+        reserves.append(reserve[1]/reserve[0])
         csvwriter.writerow(reserves)
     
 def getAmountOut(reserveIn, reserveOut, amountIn):
