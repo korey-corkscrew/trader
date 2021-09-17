@@ -10,6 +10,7 @@ tradeFile = 'trades.csv'
 
 def getAmountOut(amtIn, reserveIn, reserveOut):
     return reserveOut - ((reserveIn * reserveOut) / ((amtIn * .997) + reserveIn))
+    
 
 def main():
     trade = False
