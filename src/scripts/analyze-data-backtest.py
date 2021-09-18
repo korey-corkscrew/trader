@@ -90,4 +90,5 @@ def main():
     print()
     print("Profit: " + str(profit * 10**-6))
     print(str(tradeCount) + " Trades")
+    print("Current MATIC price: " + str((int(df['usdc_reserve'].iloc[i]) * 10**-6) / (int(df['matic_reserve'].iloc[i]) * 10**-18)))
     
