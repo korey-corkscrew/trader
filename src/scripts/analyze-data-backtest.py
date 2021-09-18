@@ -24,12 +24,27 @@ def sellSignal(df, i):
     if df['price'].iloc[i] < df['100 MA'].iloc[i]:
         if df['price'].iloc[i-1] > df['100 MA'].iloc[i-1]:
             return True
+
+
+def plot(df):
+    #fig, ax = plt.subplots()
+    #ax2 = ax.twinx()
+    plt.figure(figsize=(12, 8))
+    #plt.title('MATIC/USDC - Current Price - 100 MA')
+    plt.plot(df.index, df[['100 MA', 'price']])
+    plt.plot(df.index, df['buy'], '^', color='g')
+    plt.plot(df.index, df['sell'], 'v', color='r')
+    plt.xlabel('Trading Dates')
+    plt.ylabel('Price (USDC)')
+    #fig.xticks(df.index[::20], rotation='vertical')
+    #fig.legend(('100 MA'), loc='lower right')
+    plt.show()
     
 
 def main():
     trade = []
 
-    startAmt = int(100 * 10**6)
+    startAmt = int(1000 * 10**6)
     #startAmt = []
     maticAmt = []
     profit = 0
@@ -43,8 +58,13 @@ def main():
 
     df = pd.read_csv((priceFile), index_col=3)
     df.columns = ['matic_reserve', 'usdc_reserve', 'last_tx_time', 'price']
+
+    df = df[3440:]
+
     df['100 MA'] = df.price.rolling(window=100).mean()
     df['200 MA'] = df.price.rolling(window=150).mean()
+    df['buy'] = None
+    df['sell'] = None
     
     for i in range(len(df)):
 
@@ -57,6 +77,7 @@ def main():
                     tradeCount = tradeCount + 1
                     print(datetime.datetime.fromtimestamp(df.index[i]))
                     print("Buy MATIC @ " + str(df['price'].iloc[i]))
+                    df['buy'].iloc[i] = df['price'].iloc[i]
                     maticAmt[j] = getAmountOut(startAmt, int(df['usdc_reserve'].iloc[i]), int(df['matic_reserve'].iloc[i]))
                     print("Trade: " + str(j) + " --- " + str(startAmt*10**-6) + " USDC --> " + str(maticAmt[j]*10**-18) + " MATIC")
                     print("---------------------------------------------------\n\n")
@@ -75,6 +96,7 @@ def main():
                         #startAmt[j] = amt
                         print(datetime.datetime.fromtimestamp(df.index[i]))
                         print("Sell MATIC @ " + str(df['price'].iloc[i]))
+                        df['sell'].iloc[i] = df['price'].iloc[i]
                         print("Trade: " + str(j) + " --- " + str(maticAmt[j]*10**-18) + " MATIC --> " + str(amt*10**-6) + " USDC")
                         maticAmt[j] = 0
                         print("---------------------------------------------------\n\n")
@@ -91,4 +113,5 @@ def main():
     print("Profit: " + str(profit * 10**-6))
     print(str(tradeCount) + " Trades")
     print("Current MATIC price: " + str((int(df['usdc_reserve'].iloc[i]) * 10**-6) / (int(df['matic_reserve'].iloc[i]) * 10**-18)))
+    plot(df)
     
