@@ -31,7 +31,9 @@ def plot(df):
     #ax2 = ax.twinx()
     plt.figure(figsize=(12, 8))
     #plt.title('MATIC/USDC - Current Price - 100 MA')
-    plt.plot(df.index, df[['100 MA', 'price']])
+    plt.plot(df.index, df[['price']], color=('black'))
+    plt.plot(df.index, df['100 MA'], color=('brown'))
+    plt.plot(df.index, df['200 MA'], color=('grey'))
     plt.plot(df.index, df['buy'], '^', color='g')
     plt.plot(df.index, df['sell'], 'v', color='r')
     plt.xlabel('Trading Dates')
@@ -51,7 +53,7 @@ def main():
 
     tradeCount = 0
 
-    for n in range(30):
+    for n in range(10):
         trade.append(False)
         #startAmt.append(startAmt)
         maticAmt.append(0)
@@ -62,14 +64,14 @@ def main():
     df = df[3440:]
 
     df['100 MA'] = df.price.rolling(window=100).mean()
-    df['200 MA'] = df.price.rolling(window=150).mean()
+    df['200 MA'] = df.price.rolling(window=200).mean()
     df['buy'] = None
     df['sell'] = None
     
     for i in range(len(df)):
 
         # Buy signal
-        if buySignal(df, i):
+        if buySignal(df, i) and df['price'].iloc[i] < df['200 MA'].iloc[i]:
             # Find first open trade
             for j, val in enumerate(trade):
                 if not val:
@@ -83,7 +85,7 @@ def main():
                     print("---------------------------------------------------\n\n")
                     break
 
-
+        '''
         if sellSignal(df, i):
             for j, val in enumerate(trade):
                 #print(val)
@@ -100,17 +102,39 @@ def main():
                         print("Trade: " + str(j) + " --- " + str(maticAmt[j]*10**-18) + " MATIC --> " + str(amt*10**-6) + " USDC")
                         maticAmt[j] = 0
                         print("---------------------------------------------------\n\n")
+        '''
+
+        for j, val in enumerate(trade):
+            if val:
+                amt = getAmountOut(maticAmt[j], int(df['matic_reserve'].iloc[i]), int(df['usdc_reserve'].iloc[i]))
+                if (sellSignal(df, i) and amt > startAmt) or amt > startAmt * 1.05:
+                    trade[j] = False
+                    tradeCount = tradeCount + 1
+                    profit = profit + (amt - startAmt)
+                    #startAmt[j] = amt
+                    print(datetime.datetime.fromtimestamp(df.index[i]))
+                    print("Sell MATIC @ " + str(df['price'].iloc[i]))
+                    df['sell'].iloc[i] = df['price'].iloc[i]
+                    print("Trade: " + str(j) + " --- " + str(maticAmt[j]*10**-18) + " MATIC --> " + str(amt*10**-6) + " USDC")
+                    maticAmt[j] = 0
+                    print("---------------------------------------------------\n\n")
+
 
     totalVal = 0
     numTrades = 0
+    count = 0
     for n, val in enumerate(trade):
         if val:
+            count = count + 1
             numTrades = numTrades + 1
             totalVal = totalVal + (getAmountOut(maticAmt[n], int(df['matic_reserve'].iloc[i]), int(df['usdc_reserve'].iloc[i])) * 10**-6)
             print("Trade: " + str(n) + " --- " + str(maticAmt[n]*10**-18) + " MATIC ($" + str(getAmountOut(maticAmt[n], int(df['matic_reserve'].iloc[i]), int(df['usdc_reserve'].iloc[i])) * 10**-6) + ")")
 
+    diff = totalVal + (profit * 10**-6) - (startAmt * 10**-6 * count)
     print()
-    print("Profit: " + str(profit * 10**-6))
+    print("Total Value: " + str(totalVal))
+    print("Bank: " + str(profit * 10**-6))
+    print("Profit: " + str(diff))
     print(str(tradeCount) + " Trades")
     print("Current MATIC price: " + str((int(df['usdc_reserve'].iloc[i]) * 10**-6) / (int(df['matic_reserve'].iloc[i]) * 10**-18)))
     plot(df)
